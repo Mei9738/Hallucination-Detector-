@@ -1,0 +1,23 @@
+name: CI
+
+on: push                      # run on every push
+
+jobs:
+  check:
+    runs-on: ubuntu-latest    # a fresh Linux computer
+    steps:
+      - uses: actions/checkout@v4          # download your repo onto it
+      - uses: actions/setup-python@v5      # install Python
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Tests
+        run: pytest
