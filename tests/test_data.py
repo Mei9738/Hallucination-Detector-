@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from hallucination_detector.data import (
+    clean,
     shared_contexts,
     split_by_context,
     split_stratified,
@@ -66,10 +67,10 @@ def test_split_by_context_does_not_modify_input() -> None:
 def test_split_stratified() -> None:
     df = make_df()
     train, val = split_stratified(df, val_frac=0.2, seed=0)
-    shared_contexts(train, val) == set()
     expected = set(df["task_type"])
     assert set(train["task_type"]) == expected
     assert set(val["task_type"]) == expected
+    assert shared_contexts(train, val) == set()
 
 
 def test_split_by_context_raises_with_one_context() -> None:
@@ -77,3 +78,32 @@ def test_split_by_context_raises_with_one_context() -> None:
     one_context = df[df["context"] == "ctx0"]
     with pytest.raises(ValueError):
         split_by_context(one_context, val_frac=0.2, seed=0)
+
+
+def make_raw_df() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "context": ["\n hello ", "world", "  pandas  "],
+            "output": [" answer ", "correct", "\n result "],
+            "hallucination_labels_processed": [
+                {"evident_conflict": 0, "baseless_info": 0},
+                {"evident_conflict": 0, "baseless_info": 1},
+                {"evident_conflict": 1, "baseless_info": 0},
+            ],
+        }
+    )
+
+
+def test_clean() -> None:
+    df = make_raw_df()
+    result = clean(df)
+    assert result["context"].tolist() == ["hello", "world", "pandas"]
+    assert result["output"].tolist() == ["answer", "correct", "result"]
+    assert result["label"].tolist() == [0, 1, 1]
+
+
+def test_clean_does_not_modify_input() -> None:
+    df = make_raw_df()
+    original = df.copy()
+    clean(df)
+    pd.testing.assert_frame_equal(df, original)

@@ -8,6 +8,7 @@ def to_label(processed: dict[str, int]) -> int:
 
 
 def shared_contexts(a: pd.DataFrame, b: pd.DataFrame) -> set[str]:
+    """Return the contexts that appear in both a and b (empty set = no leakage)."""
     return set(a["context"]) & set(b["context"])
 
 
@@ -38,6 +39,7 @@ def split_by_context(
 def split_stratified(
     df: pd.DataFrame, val_frac: float = 0.15, seed: int = 42
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Split by context within each task type, so both splits keep the task mix."""
     train_list = []
     val_list = []
     for task in df["task_type"].unique():
@@ -48,3 +50,12 @@ def split_stratified(
     train = pd.concat(train_list, ignore_index=True)
     val = pd.concat(val_list, ignore_index=True)
     return train, val
+
+
+def clean(df: pd.DataFrame) -> pd.DataFrame:
+    """Strip whitespace from context/output and add a binary label (1 = hallucinated)."""
+    cleaned = df.copy()
+    cleaned["context"] = df["context"].str.strip()
+    cleaned["output"] = df["output"].str.strip()
+    cleaned["label"] = df["hallucination_labels_processed"].apply(to_label)
+    return cleaned
