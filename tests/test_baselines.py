@@ -1,6 +1,10 @@
 import pytest
 
-from hallucination_detector.baselines import MajorityBaseline, word_overlap
+from hallucination_detector.baselines import (
+    MajorityBaseline,
+    WordOverlapBaseline,
+    word_overlap,
+)
 
 
 def test_majority_predicts_1_when_mostly_hallucinated() -> None:
@@ -51,3 +55,22 @@ def test_word_overlap_punctuation() -> None:
 def test_word_overlap_empty_answer() -> None:
     with pytest.raises(ValueError):
         word_overlap("...", "context")
+
+
+def test_word_overlap_baseline() -> None:
+    examples = [
+        ("Paris is the capital", "The capital of France is Paris."),  # grounded
+        (
+            "Berlin hosts the Olympics",
+            "The capital of France is Paris.",
+        ),  # hallucinated
+    ]
+    labels = [0, 1]
+
+    model = WordOverlapBaseline()
+    model.fit(examples, labels)
+    assert model.predict(examples[0]) == 0
+    assert model.predict(examples[1]) == 1
+
+    assert model.score(examples[0]) == pytest.approx(0.0)
+    assert model.score(examples[1]) == pytest.approx(0.75)
