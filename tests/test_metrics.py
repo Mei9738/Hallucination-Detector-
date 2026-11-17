@@ -1,5 +1,11 @@
 import pytest
-from sklearn.metrics import f1_score, fbeta_score, precision_score, recall_score
+from sklearn.metrics import (
+    f1_score,
+    fbeta_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 
 from hallucination_detector.metrics import (
     confusion_counts,
@@ -7,6 +13,7 @@ from hallucination_detector.metrics import (
     fbeta,
     precision,
     recall,
+    roc_auc,
 )
 
 y_true = [1, 1, 1, 1, 0, 0, 0, 0, 0, 0]
@@ -50,3 +57,26 @@ def test_fbeta() -> None:
     assert fbeta(y_true, y_pred, beta=0.5) == pytest.approx(
         fbeta_score(y_true, y_pred, beta=0.5)
     )
+
+
+def test_roc_auc() -> None:
+    y_true = [1, 1, 1, 0, 0, 0]
+    y_score = [0.9, 0.7, 0.4, 0.6, 0.3, 0.2]
+    assert roc_auc(y_true, y_score) == pytest.approx(8 / 9)
+    assert roc_auc(y_true, y_score) == pytest.approx(roc_auc_score(y_true, y_score))
+
+
+def test_roc_all_positives() -> None:
+    with pytest.raises(ValueError):
+        roc_auc([1, 1, 1, 1, 1, 1], [0.9, 0.7, 0.4, 0.6, 0.3, 0.2])
+
+
+def test_roc_all_negatives() -> None:
+    with pytest.raises(ValueError):
+        roc_auc([0, 0, 0, 0, 0, 0], [0.9, 0.7, 0.4, 0.6, 0.3, 0.2])
+
+
+def test_roc_auc_same_score() -> None:
+    y_true = [1, 0]
+    y_score = [0.5, 0.5]
+    assert roc_auc(y_true, y_score) == 0.5
