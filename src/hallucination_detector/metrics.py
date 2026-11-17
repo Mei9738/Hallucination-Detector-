@@ -1,4 +1,7 @@
+import time
 import warnings
+from collections.abc import Callable
+from typing import Any
 
 
 def confusion_counts(y_true: list[int], y_pred: list[int]) -> tuple[int, int, int, int]:
@@ -40,7 +43,6 @@ def recall(y_true: list[int], y_pred: list[int]) -> float:
 
 def f1(y_true: list[int], y_pred: list[int]) -> float:
     """Harmonic mean of precision and recall (0.0 if both are 0)."""
-
     return fbeta(y_true, y_pred, beta=1)
 
 
@@ -83,3 +85,19 @@ def roc_auc(y_true: list[int], scores: list[float]) -> float:
 
     auc = wins / numb_pairs
     return auc
+
+
+def mean_latency_ms(predict: Callable[[Any], int], examples: list[Any]) -> float:
+    """Average time per call of predict, in milliseconds."""
+
+    if not examples:
+        raise ValueError("Empty examples list.")
+
+    durations = []
+    for example in examples:
+        start = time.perf_counter()
+        predict(example)
+        end = time.perf_counter()
+        durations.append(end - start)
+    avg = sum(durations) / len(durations)
+    return avg * 1000

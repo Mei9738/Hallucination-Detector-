@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from sklearn.metrics import (
     f1_score,
@@ -11,6 +13,7 @@ from hallucination_detector.metrics import (
     confusion_counts,
     f1,
     fbeta,
+    mean_latency_ms,
     precision,
     recall,
     roc_auc,
@@ -80,3 +83,17 @@ def test_roc_auc_same_score() -> None:
     y_true = [1, 0]
     y_score = [0.5, 0.5]
     assert roc_auc(y_true, y_score) == 0.5
+
+
+def slow_predict(text: str) -> int:
+    time.sleep(0.01)  # 10 ms
+    return 0
+
+
+def test_mean_latency_ms_raises_on_empty() -> None:
+    with pytest.raises(ValueError):
+        mean_latency_ms(slow_predict, [])
+
+
+def test_mean_latency_ms_measures_time() -> None:
+    assert mean_latency_ms(slow_predict, ["a", "b", "c"]) >= 10
