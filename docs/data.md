@@ -12,7 +12,7 @@
 | train | 15090 |
 | test  | 2700 |
 
-- No validation split, so we'll have to create my own from train split.
+- No validation split, so I'll have to create my own from train split.
 
 ## 3. Label
 - `label = 1` (hallucinated) if value of a key is 1 in `hallucination_labels_processed`, else `0`.
@@ -57,4 +57,3 @@
 | test  | 2700 | 0.349 |
 
 - Checked: 0 shared contexts between train/val and train/test.
-- Test has a lower hallucination rate (35% vs 45%), so scores on test can be lower than on val even if the model didn't change. Compare models on the same split.
