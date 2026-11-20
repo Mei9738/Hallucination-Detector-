@@ -1,5 +1,6 @@
 import re
 
+import pandas as pd
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -68,3 +69,13 @@ def tfidf_cosine(answer: str, context: str, vectorizer: TfidfVectorizer) -> floa
     vec_ans = vectorizer.transform([answer])
     res = cosine_similarity(vec_ctx, vec_ans)
     return float(res[0][0])
+
+
+def build_features(df: pd.DataFrame, vectorizer: TfidfVectorizer) -> pd.DataFrame:
+    """One row of features per (output, context) row in df."""
+
+    rows = []
+    for answer, context in zip(df["output"], df["context"]):
+        rows.append(extract_features(answer, context, vectorizer))
+
+    return pd.DataFrame(rows, index=df.index)
