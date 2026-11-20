@@ -1,6 +1,10 @@
 import re
 
+import spacy
+
 from hallucination_detector.baselines import word_overlap
+
+nlp = spacy.load("en_core_web_sm")
 
 
 def extract_features(answer: str, context: str) -> dict[str, float]:
@@ -26,8 +30,27 @@ def extract_features(answer: str, context: str) -> dict[str, float]:
                 missing += 1
         missing_numbers = missing / len(answer_numbers)
 
+    entity = entity_overlap(answer, context)
+
     return {
         "word_overlap": word_fraction,
         "length_ratio": length_ratio,
         "missing_numbers": missing_numbers,
+        "entity_overlap": entity,
     }
+
+
+def entity_overlap(answer: str, context: str) -> float:
+
+    doc = nlp(answer)
+
+    if not doc.ents:
+        entity_fraction = 0.0
+    else:
+        exist = 0
+        for ent in doc.ents:
+            if ent.text.lower() in context.lower():
+                exist += 1
+
+        entity_fraction = exist / len(doc.ents)
+    return entity_fraction

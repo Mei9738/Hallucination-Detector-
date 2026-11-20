@@ -13,6 +13,7 @@ dependencies = [
     "pandas", 
     "numpy",
     "scikit-learn",
+    "spacy",
 ]
 
 [project.optional-dependencies]
