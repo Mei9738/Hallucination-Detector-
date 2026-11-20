@@ -1,6 +1,8 @@
 import re
 
 import spacy
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 from hallucination_detector.baselines import word_overlap
 
@@ -54,3 +56,12 @@ def entity_overlap(answer: str, context: str) -> float:
 
         entity_fraction = exist / len(doc.ents)
     return entity_fraction
+
+
+def tfidf_cosine(answer: str, context: str, vectorizer: TfidfVectorizer) -> float:
+    """Cosine similarity between the TF-IDF vectors of answer and context."""
+
+    vec_ctx = vectorizer.transform([context])
+    vec_ans = vectorizer.transform([answer])
+    res = cosine_similarity(vec_ctx, vec_ans)
+    return float(res[0][0])

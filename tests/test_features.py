@@ -1,6 +1,7 @@
 import pytest
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-from hallucination_detector.features import extract_features
+from hallucination_detector.features import extract_features, tfidf_cosine
 
 
 def test_extract_features() -> None:
@@ -53,3 +54,29 @@ def test_extract_features_no_entity() -> None:
     answer = "It was built a long time ago."
     context = "The Eiffel Tower is in Paris and was built back then."
     assert extract_features(answer, context)["entity_overlap"] == 0.0
+
+
+def test_tfid_cosine() -> None:
+    vectorizer = TfidfVectorizer().fit(
+        [
+            "The Eiffel Tower is in Paris.",
+            "The Colosseum is in Rome.",
+        ]
+    )
+    answer = "Paris has a Tower."
+    context = "Paris has a Tower."
+    assert tfidf_cosine(answer, context, vectorizer) == pytest.approx(1.0)
+
+
+def test_tfid_cosine_no_shared_words() -> None:
+
+    vectorizer = TfidfVectorizer().fit(
+        [
+            "The Eiffel Tower is in Paris.",
+            "The Colosseum is in Rome.",
+        ]
+    )
+
+    answer = "Rome Colosseum"
+    context = "Paris Tower"
+    assert tfidf_cosine(answer, context, vectorizer) == pytest.approx(0.0)
