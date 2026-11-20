@@ -24,6 +24,7 @@ dev = [
 notebooks = [
     "datasets", 
     "jupyter",
+    "mlflow",
 ]
 
 [tool.pytest.ini_options]
