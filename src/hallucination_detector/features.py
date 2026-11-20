@@ -9,7 +9,9 @@ from hallucination_detector.baselines import word_overlap
 nlp = spacy.load("en_core_web_sm")
 
 
-def extract_features(answer: str, context: str) -> dict[str, float]:
+def extract_features(
+    answer: str, context: str, vectorizer: TfidfVectorizer
+) -> dict[str, float]:
     """Turn one (answer, context) pair into numeric features."""
 
     len_answer = len(re.findall(r"\w+", answer.lower()))
@@ -33,12 +35,13 @@ def extract_features(answer: str, context: str) -> dict[str, float]:
         missing_numbers = missing / len(answer_numbers)
 
     entity = entity_overlap(answer, context)
-
+    tfidf = tfidf_cosine(answer, context, vectorizer)
     return {
         "word_overlap": word_fraction,
         "length_ratio": length_ratio,
         "missing_numbers": missing_numbers,
         "entity_overlap": entity,
+        "tfidf_cosine": tfidf,
     }
 
 

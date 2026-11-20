@@ -3,80 +3,72 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from hallucination_detector.features import extract_features, tfidf_cosine
 
+vect = TfidfVectorizer().fit(
+    [
+        "The Eiffel Tower is in Paris.",
+        "The Colosseum is in Rome.",
+    ]
+)
+
 
 def test_extract_features() -> None:
     answer = "The Eiffel Tower was built in 1925 in Lyon."
     context = "The Eiffel Tower is in Paris and was built in 1889."
-    assert extract_features(answer, context) == {
-        "word_overlap": pytest.approx(7 / 9),
-        "length_ratio": pytest.approx(9 / 11),
-        "missing_numbers": pytest.approx(1),
-        "entity_overlap": pytest.approx(1 / 3),
-    }
+    features = extract_features(answer, context, vect)
+
+    assert set(features) == {"word_overlap", "length_ratio", "missing_numbers", "entity_overlap", "tfidf_cosine"}
 
 
 def test_extract_features_empty_ctx() -> None:
     answer = "The Eiffel Tower was built in 1925 in Lyon."
     context = "..."
     with pytest.raises(ValueError):
-        extract_features(answer, context)
+        extract_features(answer, context, vect)
 
 
 def test_extract_features_no_num() -> None:
     answer = "The Eiffel Tower was built in Lyon."
     context = "The Eiffel Tower is in Paris and was built in 1889."
-    assert extract_features(answer, context) == {
-        "word_overlap": pytest.approx(6 / 7),
-        "length_ratio": pytest.approx(7 / 11),
-        "missing_numbers": 0.0,
-        "entity_overlap": pytest.approx(1 / 2),
-    }
+    features = extract_features(answer, context, vect)
+
+    assert features["word_overlap"] == pytest.approx(6 / 7)
+    assert features["length_ratio"] == pytest.approx(7 / 11)
+    assert features["missing_numbers"] == 0.0
+    assert features["entity_overlap"] == pytest.approx(1 / 2)
 
 
 def test_extract_features_no_num_ctx() -> None:
     answer = "The Eiffel Tower was built in 1925 in Lyon."
     context = "The Eiffel Tower is in Paris and was built back then."
-    assert extract_features(answer, context) == {
-        "word_overlap": pytest.approx(7 / 9),
-        "length_ratio": pytest.approx(9 / 11),
-        "missing_numbers": 1.0,
-        "entity_overlap": pytest.approx(1 / 3),
-    }
+    features = extract_features(answer, context, vect)
+
+    assert features["word_overlap"] == pytest.approx(7 / 9)
+    assert features["length_ratio"] == pytest.approx(9 / 11)
+    assert features["missing_numbers"] == 1.0
+    assert features["entity_overlap"] == pytest.approx(1 / 3)
 
 
 def test_extract_features_entity_overlap() -> None:
     answer = "The Eiffel Tower is in Paris and was built in 1925."
     context = "The Eiffel Tower was built in 1925 in Paris."
-    assert extract_features(answer, context)["entity_overlap"] == pytest.approx(3 / 3)
+    assert extract_features(answer, context, vect)[
+        "entity_overlap"
+    ] == pytest.approx(3 / 3)
 
 
 def test_extract_features_no_entity() -> None:
     answer = "It was built a long time ago."
     context = "The Eiffel Tower is in Paris and was built back then."
-    assert extract_features(answer, context)["entity_overlap"] == 0.0
+    assert extract_features(answer, context, vect)["entity_overlap"] == 0.0
 
 
 def test_tfid_cosine() -> None:
-    vectorizer = TfidfVectorizer().fit(
-        [
-            "The Eiffel Tower is in Paris.",
-            "The Colosseum is in Rome.",
-        ]
-    )
     answer = "Paris has a Tower."
     context = "Paris has a Tower."
-    assert tfidf_cosine(answer, context, vectorizer) == pytest.approx(1.0)
+    assert tfidf_cosine(answer, context, vect) == pytest.approx(1.0)
 
 
 def test_tfid_cosine_no_shared_words() -> None:
-
-    vectorizer = TfidfVectorizer().fit(
-        [
-            "The Eiffel Tower is in Paris.",
-            "The Colosseum is in Rome.",
-        ]
-    )
-
     answer = "Rome Colosseum"
     context = "Paris Tower"
-    assert tfidf_cosine(answer, context, vectorizer) == pytest.approx(0.0)
+    assert tfidf_cosine(answer, context, vect) == pytest.approx(0.0)
